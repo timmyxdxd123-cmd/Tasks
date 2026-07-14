@@ -2,11 +2,21 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no">
 <title>Focus Trail</title>
+<meta name="description" content="A calm, game-inspired daily task tracker.">
+<meta name="theme-color" content="#0A0E16">
+<meta name="robots" content="noindex, nofollow">
+<meta name="format-detection" content="telephone=no">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Focus Trail">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="favicon.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
 <style>
   :root{
     --bg:#0A0E16;
@@ -35,6 +45,11 @@
     --ease: cubic-bezier(0.32, 0.72, 0, 1);
   }
   *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  button, .swipe-content, .chip, .navbtn, .theme-swatch, .char-card, .theme-pill, .dot-swatch, .list-avatar, .checkbox{
+    -webkit-user-select:none;
+    user-select:none;
+    -webkit-touch-callout:none;
+  }
   html,body{height:100%;}
   body{
     margin:0;
@@ -80,7 +95,7 @@
     opacity:0.5;
   }
   header.top{
-    padding:24px 20px 14px;
+    padding:calc(24px + env(safe-area-inset-top)) 20px 14px;
     flex-shrink:0;
     position:relative;
     z-index:2;
@@ -429,20 +444,27 @@
   }
   .fab{
     pointer-events:auto;
-    width:56px;height:56px;
-    border-radius:50%;
-    background:var(--gradient);
-    border:none;
-    box-shadow:0 6px 18px rgba(var(--accent2-rgb),0.28), inset 0 1px 1px rgba(255,255,255,0.5);
-    color:var(--ink-on-neon);
     display:flex;
     align-items:center;
+    gap:8px;
+    height:52px;
+    padding:0 20px 0 18px;
+    border-radius:999px;
+    background:var(--gradient);
+    border:none;
+    box-shadow:0 8px 22px rgba(var(--accent2-rgb),0.32), inset 0 1px 1px rgba(255,255,255,0.5);
+    color:var(--ink-on-neon);
     justify-content:center;
     cursor:pointer;
+    font-family:var(--font-pixel);
+    font-weight:600;
+    font-size:10.5px;
+    letter-spacing:0.02em;
+    text-transform:uppercase;
     transition:transform .3s var(--ease), box-shadow .3s var(--ease);
   }
-  .fab svg{width:23px;height:23px;}
-  .fab:active{transform:scale(0.90); box-shadow:0 3px 10px rgba(var(--accent2-rgb),0.22), inset 0 1px 1px rgba(255,255,255,0.5);}
+  .fab svg{width:19px;height:19px; flex-shrink:0;}
+  .fab:active{transform:scale(0.94); box-shadow:0 4px 12px rgba(var(--accent2-rgb),0.24), inset 0 1px 1px rgba(255,255,255,0.5);}
 
   .sheet-backdrop{
     position:fixed;
@@ -458,6 +480,7 @@
   .sheet-backdrop.open{opacity:1; pointer-events:auto;}
 
   .quick-sheet{
+    pointer-events:auto;
     position:fixed;
     left:50%;
     bottom:0;
@@ -734,11 +757,8 @@
   .stat-num{
     font-family:var(--font-pixel);
     font-weight:600;
-    font-size:19px;
-    background:var(--gradient);
-    -webkit-background-clip:text;
-    background-clip:text;
-    color:transparent;
+    font-size:22px;
+    color:var(--neon-text);
     letter-spacing:0;
     line-height:1.4;
   }
@@ -1408,7 +1428,7 @@ function renderShell(){
     <main id="main"></main>
 
     <div class="floating-layer">
-      <div class="fab-wrap"><button class="fab" id="fab-btn">${icon('plus')}</button></div>
+      <div class="fab-wrap"><button class="fab" id="fab-btn">${icon('plus')}<span>Add Task</span></button></div>
       <nav class="tabbar">
         <button class="navbtn" data-view="today">${icon('today')}<span>Today</span></button>
         <button class="navbtn" data-view="lists">${icon('lists')}<span>Lists</span></button>
@@ -1689,7 +1709,7 @@ function renderLists(main){
         <div class="list-avatar" style="background:${l.color}">${initialOf(l.name)}</div>
         <div class="listcard-name">${escapeHtml(l.name)}</div>
         <div class="listcard-count">${l.tasks.length}</div>
-        <button class="icon-btn del-list" data-list="${l.id}">${icon('trash')}</button>
+        <button class="icon-btn del-list" data-list="${l.id}" aria-label="Delete list">${icon('trash')}</button>
       </div>
       <div class="tasklet-list" data-list="${l.id}">
         ${l.tasks.map(t=>`
