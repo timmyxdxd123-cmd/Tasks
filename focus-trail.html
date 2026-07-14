@@ -1,0 +1,1943 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<title>Focus Trail</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Pixelify+Sans:wght@400;500;600;700&family=Plus+Jakarta+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0A0E16;
+    --glass:rgba(255,255,255,0.05);
+    --glass-strong:rgba(255,255,255,0.09);
+    --glass-border:rgba(var(--accent-rgb),0.16);
+    --glass-highlight:rgba(255,255,255,0.16);
+    --text:#EDF3F1;
+    --text-muted:#98ABB0;
+    --neon-a:#5FFFC0;
+    --neon-b:#4FD6FF;
+    --neon-text:#BFFFEA;
+    --accent-rgb:95,255,192;
+    --accent2-rgb:79,214,255;
+    --gradient: linear-gradient(135deg,#5FFFC0,#4FD6FF);
+    --danger-gradient: linear-gradient(135deg,#FFD166,#FF9F1C);
+    --ink-on-neon:#0A0E16;
+    --font-display: 'Pixelify Sans', 'JetBrains Mono', ui-monospace, monospace;
+    --font-pixel: 'Pixelify Sans', 'JetBrains Mono', ui-monospace, monospace;
+    --font-body: 'Pixelify Sans', 'JetBrains Mono', ui-monospace, monospace;
+    --font-mono: 'Pixelify Sans', 'JetBrains Mono', ui-monospace, monospace;
+    --radius-lg:24px;
+    --radius-md:18px;
+    --radius-sm:12px;
+    --text-outline: -1px -1px 0 rgba(0,0,0,0.85), 1px -1px 0 rgba(0,0,0,0.85), -1px 1px 0 rgba(0,0,0,0.85), 1px 1px 0 rgba(0,0,0,0.85), 0 1px 0 rgba(0,0,0,0.85), 0 -1px 0 rgba(0,0,0,0.85), 1px 0 0 rgba(0,0,0,0.85), -1px 0 0 rgba(0,0,0,0.85);
+    --ease: cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  *{box-sizing:border-box; -webkit-tap-highlight-color:transparent;}
+  html,body{height:100%;}
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--text);
+    font-family:var(--font-body);
+    text-shadow:var(--text-outline);
+    display:flex;
+    justify-content:center;
+    overscroll-behavior:none;
+  }
+  #app{
+    width:100%;
+    max-width:430px;
+    min-height:100vh;
+    min-height:100dvh;
+    display:flex;
+    flex-direction:column;
+    position:relative;
+    overflow-x:hidden;
+    background:
+      radial-gradient(circle at 15% -5%, rgba(var(--accent-rgb),0.16), transparent 42%),
+      radial-gradient(circle at 100% 10%, rgba(var(--accent2-rgb),0.13), transparent 40%),
+      radial-gradient(circle at 30% 60%, rgba(255,255,255,0.035), transparent 45%),
+      var(--bg);
+    transition:background 0.4s ease;
+  }
+  #app::before{
+    content:'';
+    position:fixed;
+    inset:0;
+    max-width:430px;
+    margin:0 auto;
+    pointer-events:none;
+    background:repeating-linear-gradient(
+      to bottom,
+      rgba(255,255,255,0.010) 0px,
+      rgba(255,255,255,0.010) 1px,
+      transparent 1px,
+      transparent 3px
+    );
+    z-index:1;
+    opacity:0.5;
+  }
+  header.top{
+    padding:24px 20px 14px;
+    flex-shrink:0;
+    position:relative;
+    z-index:2;
+  }
+  .header-row{
+    display:flex;
+    align-items:flex-start;
+    justify-content:space-between;
+    gap:12px;
+  }
+  .eyebrow{
+    display:inline-block;
+    font-family:var(--font-pixel);
+    font-weight:600;
+    font-size:10.5px;
+    letter-spacing:0.03em;
+    color:var(--neon-text);
+    text-transform:uppercase;
+    background:rgba(var(--accent-rgb),0.18);
+    border:1px solid rgba(var(--accent-rgb),0.5);
+    padding:7px 13px;
+    border-radius:999px;
+    box-shadow:0 0 10px rgba(var(--accent-rgb),0.18);
+  }
+  h1.appname{
+    font-family:var(--font-pixel);
+    font-weight:700;
+    font-size:26px;
+    margin:6px 0 16px;
+    letter-spacing:0.01em;
+    line-height:1.3;
+    color:var(--text);
+    text-shadow:var(--text-outline), 0 0 14px rgba(var(--accent-rgb),0.3);
+  }
+  .theme-btn{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    padding:10px 14px;
+    border-radius:999px;
+    background:var(--gradient);
+    color:var(--ink-on-neon);
+    border:none;
+    font-family:var(--font-pixel);
+    font-weight:500;
+    font-size:9.5px;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    box-shadow:0 4px 16px rgba(var(--accent2-rgb),0.32);
+    cursor:pointer;
+    flex-shrink:0;
+    margin-top:2px;
+    transition:transform .2s var(--ease), box-shadow .2s var(--ease);
+  }
+  .theme-btn:active{transform:scale(0.94); box-shadow:0 2px 8px rgba(var(--accent2-rgb),0.26);}
+  .theme-btn svg{width:15px;height:15px;}
+  .glass{
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    -webkit-backdrop-filter:blur(24px) saturate(160%);
+    backdrop-filter:blur(24px) saturate(160%);
+    box-shadow:
+      inset 0 1px 0 var(--glass-highlight),
+      0 8px 22px rgba(0,0,0,0.25);
+    transition:border-color 0.4s ease;
+  }
+  .streak-row{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    border-radius:var(--radius-lg);
+    padding:14px 18px;
+    position:relative;
+    z-index:2;
+  }
+  .streak-flame{
+    width:40px;height:40px;flex-shrink:0;
+    border-radius:50%;
+    background:var(--gradient);
+    display:flex;align-items:center;justify-content:center;
+    box-shadow:0 0 12px rgba(var(--accent2-rgb),0.26), inset 0 1px 1px rgba(255,255,255,0.45);
+  }
+  .streak-flame svg{width:18px;height:18px; color:var(--ink-on-neon);}
+  .streak-num{
+    font-family:var(--font-pixel);
+    font-weight:600;
+    font-size:16px;
+    line-height:1.5;
+    letter-spacing:0.01em;
+  }
+  .streak-label{
+    font-size:11.5px;
+    font-family:var(--font-mono);
+    color:var(--text-muted);
+    margin-top:4px;
+  }
+  .trail{
+    display:flex;
+    gap:5px;
+    margin-left:auto;
+  }
+  .trail .dot{
+    width:8px;height:8px;border-radius:50%;
+    background:rgba(255,255,255,0.06);
+    border:1px solid var(--glass-border);
+  }
+  .trail .dot.lit{
+    background:var(--gradient);
+    border:none;
+    box-shadow:0 0 4px rgba(var(--accent2-rgb),0.45);
+  }
+
+  .chips{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding:16px 20px 6px;
+    flex-shrink:0;
+    scrollbar-width:none;
+    position:relative;
+    z-index:2;
+  }
+  .chips::-webkit-scrollbar{display:none;}
+  .chip{
+    display:flex;
+    align-items:center;
+    gap:7px;
+    font-family:var(--font-body);
+    font-weight:600;
+    font-size:14px;
+    white-space:nowrap;
+    padding:8px 15px;
+    border-radius:999px;
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    -webkit-backdrop-filter:blur(14px);
+    backdrop-filter:blur(14px);
+    color:var(--text-muted);
+    cursor:pointer;
+    flex-shrink:0;
+    transition:transform .22s var(--ease), background .22s var(--ease), color .22s var(--ease), border-color .22s var(--ease);
+  }
+  .chip:active{transform:scale(0.95);}
+  .chip.active{
+    background:rgba(var(--accent-rgb),0.16);
+    border-color:rgba(var(--accent-rgb),0.45);
+    color:var(--neon-text);
+  }
+  .dot-swatch{
+    width:9px;height:9px;
+    border-radius:50%;
+    flex-shrink:0;
+    box-shadow:0 0 4px currentColor;
+  }
+
+  main{
+    flex:1;
+    overflow-y:auto;
+    padding:14px 20px 140px;
+    -webkit-overflow-scrolling:touch;
+    position:relative;
+    z-index:2;
+  }
+
+  .empty{
+    text-align:center;
+    padding:56px 24px;
+    color:var(--text-muted);
+  }
+  .icon-badge{
+    width:60px;height:60px;
+    border-radius:50%;
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    display:flex;align-items:center;justify-content:center;
+    margin:0 auto 16px;
+    color:var(--neon-text);
+  }
+  .icon-badge svg{width:25px;height:25px;}
+  .empty p{font-size:14px; line-height:1.55; color:var(--text-muted); font-family:var(--font-body);}
+  .empty button{margin-top:18px;}
+
+  /* ---- swipe-to-delete rows ---- */
+  .swipe-item{
+    position:relative;
+    border-radius:var(--radius-md);
+    margin-bottom:10px;
+    overflow:hidden;
+    max-height:200px;
+    transition:max-height .3s var(--ease), margin-bottom .3s var(--ease), opacity .3s var(--ease);
+  }
+  .swipe-delete-btn{
+    position:absolute;
+    inset:0;
+    background:var(--danger-gradient);
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    padding-right:24px;
+    border-radius:var(--radius-md);
+  }
+  .swipe-delete-btn svg{width:19px;height:19px;color:rgba(40,24,0,0.8);}
+  .swipe-content{
+    position:relative;
+    border-radius:var(--radius-md);
+    touch-action:pan-y;
+    will-change:transform;
+    transition:transform .3s var(--ease);
+  }
+
+  .task{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    padding:14px 16px;
+  }
+  .task.done{opacity:0.48;}
+  .task .listtag{
+    display:flex;
+    align-items:center;
+    gap:5px;
+    font-size:11px;
+    color:var(--text-muted);
+    font-family:var(--font-body);
+    margin-top:3px;
+  }
+  .task-main{flex:1; min-width:0;}
+  .task-text{
+    font-family:var(--font-pixel);
+    font-weight:500;
+    font-size:14.5px;
+    line-height:1.7;
+    letter-spacing:0.005em;
+    word-break:break-word;
+  }
+  .task.done .task-text{
+    text-decoration:line-through;
+    text-decoration-color:var(--neon-b);
+    text-decoration-thickness:1.5px;
+    color:var(--text-muted);
+  }
+  .checkbox{
+    width:28px;height:28px;
+    border-radius:50%;
+    border:1.75px solid rgba(255,255,255,0.16);
+    flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    transition:transform .3s var(--ease), background .3s var(--ease), border-color .3s var(--ease), box-shadow .3s var(--ease);
+  }
+  .checkbox svg{
+    width:13px;height:13px;
+    opacity:0;
+    transform:scale(0.6);
+    transition:all .25s var(--ease);
+  }
+  .checkbox.checked{
+    background:var(--gradient);
+    border-color:transparent;
+    transform:scale(1.06);
+    box-shadow:0 0 10px rgba(var(--accent2-rgb),0.35);
+  }
+  .checkbox.checked svg{opacity:1; transform:scale(1); color:var(--ink-on-neon);}
+  .checkbox.pop{animation:pop .4s var(--ease);}
+  @keyframes pop{
+    0%{transform:scale(1);}
+    45%{transform:scale(1.16);}
+    100%{transform:scale(1.06);}
+  }
+
+  .section-label{
+    font-family:var(--font-pixel);
+    font-weight:500;
+    font-size:11px;
+    letter-spacing:0.03em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+    margin:20px 2px 12px;
+    line-height:1.8;
+    opacity:0.95;
+  }
+  .swipe-hint{
+    text-align:center;
+    font-size:11.5px;
+    font-family:var(--font-body);
+    color:var(--text-muted);
+    margin:2px 0 14px;
+    opacity:0.7;
+  }
+
+  /* ---- floating layer: tabbar + fab + sheets ---- */
+  .floating-layer{
+    position:fixed;
+    left:50%;
+    bottom:0;
+    transform:translateX(-50%);
+    width:100%;
+    max-width:430px;
+    height:0;
+    pointer-events:none;
+    z-index:30;
+  }
+  nav.tabbar{
+    position:absolute;
+    left:0; right:0; bottom:0;
+    display:flex;
+    background:rgba(12,15,22,0.74);
+    -webkit-backdrop-filter:blur(28px) saturate(160%);
+    backdrop-filter:blur(28px) saturate(160%);
+    border-top:1px solid var(--glass-border);
+    padding:10px 6px calc(10px + env(safe-area-inset-bottom));
+    pointer-events:auto;
+  }
+  .navbtn{
+    flex:1;
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:5px;
+    background:none;
+    border:none;
+    color:var(--text-muted);
+    font-family:var(--font-pixel);
+    font-weight:500;
+    font-size:8.5px;
+    letter-spacing:0.01em;
+    text-transform:uppercase;
+    cursor:pointer;
+    padding:7px 0;
+    border-radius:14px;
+    transition:color .25s var(--ease), transform .25s var(--ease), background .25s var(--ease);
+  }
+  .navbtn:active{transform:scale(0.94); background:rgba(255,255,255,0.04);}
+  .navbtn svg{width:20px;height:20px; transition:transform .25s var(--ease);}
+  .navbtn.active{color:var(--neon-text);}
+  .navbtn.active svg{transform:translateY(-1px); filter:drop-shadow(0 0 3px rgba(var(--accent2-rgb),0.35));}
+
+  .fab-wrap{
+    position:absolute;
+    right:0; left:0;
+    bottom:88px;
+    display:flex;
+    justify-content:flex-end;
+    padding-right:20px;
+    pointer-events:none;
+  }
+  .fab{
+    pointer-events:auto;
+    width:56px;height:56px;
+    border-radius:50%;
+    background:var(--gradient);
+    border:none;
+    box-shadow:0 6px 18px rgba(var(--accent2-rgb),0.28), inset 0 1px 1px rgba(255,255,255,0.5);
+    color:var(--ink-on-neon);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    transition:transform .3s var(--ease), box-shadow .3s var(--ease);
+  }
+  .fab svg{width:23px;height:23px;}
+  .fab:active{transform:scale(0.90); box-shadow:0 3px 10px rgba(var(--accent2-rgb),0.22), inset 0 1px 1px rgba(255,255,255,0.5);}
+
+  .sheet-backdrop{
+    position:fixed;
+    inset:0;
+    background:rgba(0,0,0,0.45);
+    -webkit-backdrop-filter:blur(2px);
+    backdrop-filter:blur(2px);
+    opacity:0;
+    pointer-events:none;
+    transition:opacity .3s var(--ease);
+    z-index:29;
+  }
+  .sheet-backdrop.open{opacity:1; pointer-events:auto;}
+
+  .quick-sheet{
+    position:fixed;
+    left:50%;
+    bottom:0;
+    transform:translateX(-50%) translateY(100%);
+    width:100%;
+    max-width:430px;
+    max-height:82vh;
+    overflow-y:auto;
+    -webkit-overflow-scrolling:touch;
+    background:rgba(14,17,25,0.88);
+    -webkit-backdrop-filter:blur(30px) saturate(160%);
+    backdrop-filter:blur(30px) saturate(160%);
+    border:1px solid var(--glass-border);
+    border-bottom:none;
+    border-radius:26px 26px 0 0;
+    box-shadow:inset 0 1px 0 var(--glass-highlight), 0 -10px 36px rgba(0,0,0,0.4);
+    padding:10px 20px calc(24px + env(safe-area-inset-bottom));
+    transition:transform .38s var(--ease);
+    z-index:31;
+  }
+  .quick-sheet.open{transform:translateX(-50%) translateY(0);}
+  .sheet-handle{
+    width:36px;height:5px;
+    background:rgba(255,255,255,0.16);
+    border-radius:99px;
+    margin:6px auto 14px;
+  }
+  .sheet-header{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:14px;
+  }
+  .sheet-title{
+    font-family:var(--font-pixel);
+    font-weight:600;
+    font-size:15px;
+    letter-spacing:0.02em;
+    text-transform:uppercase;
+    color:var(--neon-text);
+    text-shadow:var(--text-outline), 0 0 10px rgba(var(--accent-rgb),0.25);
+  }
+  .sheet-close{
+    background:rgba(var(--accent-rgb),0.09);
+    border:none;
+    color:var(--neon-text);
+    font-family:var(--font-pixel);
+    font-weight:500;
+    font-size:10px;
+    letter-spacing:0.02em;
+    text-transform:uppercase;
+    cursor:pointer;
+    padding:9px 14px;
+    border-radius:999px;
+    transition:transform .2s var(--ease), background .2s var(--ease);
+  }
+  .sheet-close:active{transform:scale(0.94); background:rgba(var(--accent-rgb),0.16);}
+  .sheet-input-row{
+    display:flex;
+    gap:8px;
+    margin-top:6px;
+  }
+  .sheet-input-row input{
+    flex:1;
+    background:rgba(255,255,255,0.06);
+    border:1px solid var(--glass-border);
+    border-radius:16px;
+    padding:15px 16px;
+    color:var(--text);
+    font-family:var(--font-body);
+    font-size:16px;
+    outline:none;
+    transition:border-color .2s var(--ease);
+  }
+  .sheet-input-row input:focus{border-color:rgba(var(--accent-rgb),0.55);}
+  .sheet-input-row input::placeholder{color:var(--text-muted);}
+  .sheet-add-btn{
+    background:var(--gradient);
+    border:none;
+    border-radius:16px;
+    width:52px;
+    color:var(--ink-on-neon);
+    display:flex;align-items:center;justify-content:center;
+    cursor:pointer;
+    transition:transform .25s var(--ease);
+  }
+  .sheet-add-btn svg{width:19px;height:19px;}
+  .sheet-add-btn:active{transform:scale(0.90);}
+
+  /* ---- Theme sheet ---- */
+  .theme-grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+    padding:4px 0 18px;
+  }
+  .theme-swatch{
+    width:100%;
+    aspect-ratio:1;
+    border-radius:16px;
+    border:2px solid rgba(255,255,255,0.14);
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    transition:transform .2s var(--ease), border-color .2s var(--ease);
+  }
+  .theme-swatch:active{transform:scale(0.92);}
+  .theme-swatch.selected{border-color:#FFFFFF;}
+  .theme-swatch svg{width:16px;height:16px; opacity:0; transition:opacity .2s ease; color:rgba(10,14,22,0.85);}
+  .theme-swatch.selected svg{opacity:1;}
+  .custom-color-row{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    padding:14px 4px 4px;
+    border-top:1px solid var(--glass-border);
+    margin-top:4px;
+  }
+  .custom-color-row label{
+    font-family:var(--font-body);
+    font-size:13.5px;
+    color:var(--text-muted);
+    font-weight:500;
+  }
+  .custom-color-row input[type=color]{
+    width:42px;height:42px;
+    border-radius:12px;
+    border:1px solid var(--glass-border);
+    background:none;
+    cursor:pointer;
+    padding:0;
+    overflow:hidden;
+  }
+  .custom-color-row input[type=color]::-webkit-color-swatch-wrapper{padding:0;}
+  .custom-color-row input[type=color]::-webkit-color-swatch{border:none;border-radius:11px;}
+
+  /* ---- Lists view ---- */
+  .listcard{
+    border-radius:var(--radius-lg);
+    padding:16px;
+    margin-bottom:12px;
+  }
+  .listcard-head{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    margin-bottom:10px;
+  }
+  .list-avatar{
+    width:34px;height:34px;
+    border-radius:50%;
+    flex-shrink:0;
+    display:flex;align-items:center;justify-content:center;
+    font-family:var(--font-pixel);
+    font-weight:600;
+    font-size:12px;
+    color:rgba(10,14,22,0.85);
+  }
+  .listcard-name{
+    font-family:var(--font-display);
+    font-weight:700;
+    font-size:15.5px;
+    letter-spacing:-0.01em;
+    flex:1;
+    min-width:0;
+  }
+  .listcard-count{
+    font-family:var(--font-mono);
+    font-size:11.5px;
+    color:var(--text-muted);
+  }
+  .tasklet{
+    display:flex;
+    align-items:center;
+    padding:11px 4px;
+    font-family:var(--font-pixel);
+    font-weight:500;
+    font-size:13.5px;
+    line-height:1.6;
+  }
+  .tasklet-row + .tasklet-row .tasklet{border-top:1px solid var(--glass-border);}
+  .miniadd{
+    display:flex;
+    gap:8px;
+    margin-top:10px;
+  }
+  .miniadd input{
+    flex:1;
+    background:rgba(255,255,255,0.05);
+    border:1px solid var(--glass-border);
+    border-radius:12px;
+    padding:10px 13px;
+    color:var(--text);
+    font-family:var(--font-body);
+    font-size:13.5px;
+    outline:none;
+    transition:border-color .2s var(--ease);
+  }
+  .miniadd input:focus{border-color:rgba(var(--accent-rgb),0.55);}
+  .miniadd button, .newlist-btn{
+    background:rgba(var(--accent-rgb),0.13);
+    border:1px solid rgba(var(--accent-rgb),0.32);
+    color:var(--neon-text);
+    border-radius:12px;
+    padding:10px 16px;
+    font-family:var(--font-pixel);
+    font-weight:500;
+    font-size:9.5px;
+    letter-spacing:0.02em;
+    text-transform:uppercase;
+    cursor:pointer;
+    transition:transform .2s var(--ease), background .2s var(--ease);
+  }
+  .miniadd button:active, .newlist-btn:active{transform:scale(0.95);}
+  button.primary{
+    background:var(--gradient);
+    border:none;
+    color:var(--ink-on-neon);
+    font-family:var(--font-pixel);
+    font-weight:600;
+    font-size:11px;
+    letter-spacing:0.02em;
+    text-transform:uppercase;
+    border-radius:16px;
+    padding:15px 22px;
+    cursor:pointer;
+    box-shadow:0 6px 16px rgba(var(--accent2-rgb),0.24);
+    transition:transform .25s var(--ease), box-shadow .25s var(--ease);
+  }
+  button.primary:active{transform:scale(0.96); box-shadow:0 3px 10px rgba(var(--accent2-rgb),0.18);}
+  .icon-btn{
+    background:none;border:none;color:var(--text-muted);cursor:pointer;
+    display:flex;align-items:center;justify-content:center;
+    padding:6px;
+    border-radius:10px;
+    transition:transform .2s var(--ease), background .2s var(--ease), color .2s var(--ease);
+  }
+  .icon-btn:active{transform:scale(0.9); background:rgba(255,255,255,0.06);}
+  .icon-btn svg{width:16px;height:16px;}
+  .newlist-row{
+    display:flex;
+    gap:8px;
+    margin-bottom:16px;
+  }
+  .newlist-row input{
+    flex:1;
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    -webkit-backdrop-filter:blur(14px);
+    backdrop-filter:blur(14px);
+    border-radius:16px;
+    padding:13px 16px;
+    color:var(--text);
+    font-family:var(--font-body);
+    font-size:14px;
+    outline:none;
+    transition:border-color .2s var(--ease);
+  }
+  .newlist-row input:focus{border-color:rgba(var(--accent-rgb),0.55);}
+
+  /* ---- History view ---- */
+  .stat-row{
+    display:flex;
+    gap:10px;
+    margin-bottom:16px;
+  }
+  .stat{
+    flex:1;
+    border-radius:var(--radius-md);
+    padding:16px 10px;
+    text-align:center;
+  }
+  .stat-num{
+    font-family:var(--font-pixel);
+    font-weight:600;
+    font-size:19px;
+    background:var(--gradient);
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+    letter-spacing:0;
+    line-height:1.4;
+  }
+  .stat-label{
+    font-size:10px;
+    font-family:var(--font-mono);
+    color:var(--text-muted);
+    margin-top:8px;
+  }
+  .heatmap-card{
+    border-radius:var(--radius-lg);
+    padding:16px;
+  }
+  .heatmap{
+    display:grid;
+    grid-template-columns:repeat(14,1fr);
+    gap:4px;
+    margin-top:6px;
+  }
+  .cell{
+    aspect-ratio:1;
+    border-radius:3px;
+    background:rgba(255,255,255,0.04);
+    border:1px solid var(--glass-border);
+    transition:transform .2s var(--ease);
+  }
+
+  /* ---- Quotes view ---- */
+  .quote-card{
+    border-radius:var(--radius-lg);
+    padding:34px 24px 26px;
+    text-align:center;
+    margin-bottom:16px;
+  }
+  .quote-mark{
+    font-family:var(--font-display);
+    font-size:44px;
+    font-weight:800;
+    color:rgba(var(--accent-rgb),0.4);
+    line-height:1;
+  }
+  .quote-text{
+    font-family:var(--font-pixel);
+    font-weight:500;
+    font-size:15px;
+    line-height:1.85;
+    color:var(--text);
+    margin:6px 0 20px;
+    min-height:78px;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+  }
+  .quote-meta{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:8px;
+    flex-wrap:wrap;
+  }
+  .quote-character{
+    font-family:var(--font-mono);
+    font-size:11px;
+    color:var(--neon-text);
+    text-transform:uppercase;
+    letter-spacing:0.04em;
+  }
+  .quote-theme-tag{
+    font-family:var(--font-mono);
+    font-size:10.5px;
+    color:var(--text-muted);
+    background:rgba(255,255,255,0.06);
+    padding:3px 10px;
+    border-radius:999px;
+    text-transform:uppercase;
+    letter-spacing:0.03em;
+  }
+  .quote-shuffle{width:100%; margin-bottom:20px;}
+  .filter-select-btn{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    width:100%;
+    padding:14px 16px;
+    border-radius:16px;
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    -webkit-backdrop-filter:blur(14px);
+    backdrop-filter:blur(14px);
+    cursor:pointer;
+    margin-bottom:10px;
+    transition:transform .2s var(--ease), border-color .2s var(--ease);
+  }
+  .filter-select-btn:active{transform:scale(0.98);}
+  .filter-select-label{
+    font-family:var(--font-pixel);
+    font-size:10px;
+    letter-spacing:0.02em;
+    text-transform:uppercase;
+    color:var(--text-muted);
+  }
+  .filter-select-value-wrap{
+    display:flex;
+    align-items:center;
+    gap:6px;
+    font-family:var(--font-pixel);
+    font-size:11px;
+    color:var(--neon-text);
+    max-width:200px;
+  }
+  .filter-select-value-wrap span{
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .filter-select-value-wrap svg{width:14px;height:14px; flex-shrink:0; color:var(--text-muted);}
+  .character-grid{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:10px;
+    padding:4px 0 12px;
+  }
+  .char-card{
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    gap:7px;
+    background:none;
+    border:2px solid transparent;
+    border-radius:16px;
+    padding:10px 4px;
+    cursor:pointer;
+    transition:transform .2s var(--ease), border-color .2s var(--ease), background .2s var(--ease);
+  }
+  .char-card:active{transform:scale(0.93);}
+  .char-card.selected{border-color:#FFFFFF; background:rgba(255,255,255,0.06);}
+  .char-avatar{
+    width:42px;height:42px;
+    border-radius:50%;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-family:var(--font-pixel);
+    font-weight:600;
+    font-size:13px;
+    color:rgba(10,14,22,0.85);
+  }
+  .char-avatar svg{width:16px;height:16px;}
+  .char-name{
+    font-family:var(--font-pixel);
+    font-size:8px;
+    text-align:center;
+    line-height:1.35;
+    color:var(--text-muted);
+  }
+  .char-card.selected .char-name{color:var(--neon-text);}
+  .theme-pill-grid{
+    display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+    padding:4px 0 12px;
+  }
+  .theme-pill{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    padding:15px 10px;
+    border-radius:14px;
+    background:var(--glass);
+    border:1px solid var(--glass-border);
+    color:var(--text-muted);
+    font-family:var(--font-pixel);
+    font-size:10px;
+    text-transform:uppercase;
+    letter-spacing:0.02em;
+    cursor:pointer;
+    transition:transform .2s var(--ease), background .2s var(--ease), border-color .2s var(--ease), color .2s var(--ease);
+  }
+  .theme-pill:active{transform:scale(0.95);}
+  .theme-pill.selected{
+    background:rgba(var(--accent-rgb),0.16);
+    border-color:rgba(var(--accent-rgb),0.45);
+    color:var(--neon-text);
+  }
+  .filter-block{margin-bottom:4px;}
+  .loading{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    height:100vh;
+    color:var(--text-muted);
+    font-family:var(--font-mono);
+    font-size:13px;
+  }
+</style>
+</head>
+<body>
+<div id="app"><div class="loading">loading your trail…</div></div>
+
+<script>
+const STORAGE_KEY = 'focus-trail-data';
+const LIST_COLORS = ['#5FFFC0','#4FD6FF','#7C6BFF','#F5E663','#2EE6A6','#4D8CFF'];
+const THEME_PRESETS = [
+  {name:'Mint',   a:'#5FFFC0', b:'#4FD6FF'},
+  {name:'Ocean',  a:'#4FD6FF', b:'#4D8CFF'},
+  {name:'Violet', a:'#9B6BFF', b:'#4FD6FF'},
+  {name:'Gold',   a:'#F5E663', b:'#FFB84D'},
+  {name:'Sunset', a:'#FF9F5A', b:'#FF6F91'},
+  {name:'Lime',   a:'#B6FF3D', b:'#5FFFC0'},
+  {name:'Rose',   a:'#FF6F91', b:'#B98CFF'},
+  {name:'Sky',    a:'#7CE3FF', b:'#7C6BFF'},
+];
+const DEFAULT_THEME = {a:'#5FFFC0', b:'#4FD6FF'};
+
+const CHARACTERS = [
+  {id:'sergeant', name:'The Sergeant', color:'#FFD166'},
+  {id:'monk',     name:'The Monk',     color:'#7CE3FF'},
+  {id:'captain',  name:'The Captain',  color:'#4D8CFF'},
+  {id:'wizard',   name:'The Wizard',   color:'#9B6BFF'},
+  {id:'coach',    name:'The Coach',    color:'#5FFFC0'},
+  {id:'robot',    name:'The Robot',    color:'#B6FF3D'},
+  {id:'pirate',   name:'The Pirate',   color:'#FF9F5A'},
+  {id:'owl',      name:'The Night Owl',color:'#B98CFF'},
+  {id:'gardener',   name:'The Gardener',   color:'#6EE7A8'},
+  {id:'detective',  name:'The Detective',  color:'#7FA8E0'},
+  {id:'alchemist',  name:'The Alchemist',  color:'#E0C34D'},
+  {id:'marathoner', name:'The Marathoner', color:'#4DE0C4'},
+  {id:'architect',  name:'The Architect',  color:'#8C9EFF'},
+  {id:'stargazer',  name:'The Stargazer',  color:'#D9A8FF'},
+];
+const THEMES_LIST = [
+  {id:'focus', name:'Focus'},
+  {id:'motivation', name:'Motivation'},
+  {id:'discipline', name:'Discipline'},
+  {id:'confidence', name:'Confidence'},
+  {id:'calm', name:'Calm'},
+  {id:'perseverance', name:'Perseverance'},
+];
+const QUOTES = [
+  {id:'sergeant-1', character:'sergeant', theme:'discipline',   text:"Excuses don't finish tasks. You do."},
+  {id:'sergeant-2', character:'sergeant', theme:'motivation',   text:"Get up. Suit up. Show up."},
+  {id:'sergeant-3', character:'sergeant', theme:'perseverance', text:"Pain is temporary. Quitting lasts forever."},
+  {id:'sergeant-4', character:'sergeant', theme:'focus',        text:"No more warm-ups. Move."},
+  {id:'sergeant-5', character:'sergeant', theme:'confidence',   text:"You don't feel ready. Start anyway."},
+
+  {id:'monk-1', character:'monk', theme:'calm',        text:"Breathe. Then begin."},
+  {id:'monk-2', character:'monk', theme:'focus',        text:"One task. One breath. One moment."},
+  {id:'monk-3', character:'monk', theme:'calm',         text:"Stillness is not the enemy of progress."},
+  {id:'monk-4', character:'monk', theme:'focus',        text:"The mind that rushes misses the path."},
+  {id:'monk-5', character:'monk', theme:'perseverance', text:"Small steps carry the mountain."},
+
+  {id:'captain-1', character:'captain', theme:'motivation',   text:"Set a course. Fire the engines."},
+  {id:'captain-2', character:'captain', theme:'motivation',   text:"Every mission starts with liftoff."},
+  {id:'captain-3', character:'captain', theme:'perseverance', text:"Storms pass. Captains don't."},
+  {id:'captain-4', character:'captain', theme:'focus',        text:"Chart the task. Then conquer it."},
+  {id:'captain-5', character:'captain', theme:'confidence',   text:"Fear is just uncharted territory."},
+
+  {id:'wizard-1', character:'wizard', theme:'discipline',   text:"Magic is just discipline in disguise."},
+  {id:'wizard-2', character:'wizard', theme:'perseverance', text:"Even the smallest spell takes practice."},
+  {id:'wizard-3', character:'wizard', theme:'focus',        text:"Focus your wand, focus your will."},
+  {id:'wizard-4', character:'wizard', theme:'confidence',   text:"Doubt is a spell you can break."},
+  {id:'wizard-5', character:'wizard', theme:'calm',         text:"Rest is a potion, not a punishment."},
+
+  {id:'coach-1', character:'coach', theme:'motivation',   text:"You don't need motivation. You need momentum."},
+  {id:'coach-2', character:'coach', theme:'discipline',   text:"Show up messy. Show up anyway."},
+  {id:'coach-3', character:'coach', theme:'confidence',   text:"The scoreboard doesn't care about doubt."},
+  {id:'coach-4', character:'coach', theme:'perseverance', text:"One rep. Then one more."},
+  {id:'coach-5', character:'coach', theme:'discipline',   text:"Champions finish the boring parts too."},
+
+  {id:'robot-1', character:'robot', theme:'motivation',   text:"Task detected. Execute."},
+  {id:'robot-2', character:'robot', theme:'perseverance', text:"Error is data, not defeat."},
+  {id:'robot-3', character:'robot', theme:'focus',        text:"Optimal focus requires zero distractions."},
+  {id:'robot-4', character:'robot', theme:'confidence',   text:"Confidence: a setting, not a feeling."},
+  {id:'robot-5', character:'robot', theme:'confidence',   text:"System status: capable of this."},
+
+  {id:'pirate-1', character:'pirate', theme:'perseverance', text:"No wind? Row anyway."},
+  {id:'pirate-2', character:'pirate', theme:'motivation',   text:"Chart your own map today."},
+  {id:'pirate-3', character:'pirate', theme:'motivation',   text:"Treasure isn't found sitting still."},
+  {id:'pirate-4', character:'pirate', theme:'perseverance', text:"Storms make better sailors."},
+  {id:'pirate-5', character:'pirate', theme:'focus',        text:"Steady hands, steady course."},
+
+  {id:'owl-1', character:'owl', theme:'focus',        text:"Quiet hours build loud results."},
+  {id:'owl-2', character:'owl', theme:'discipline',    text:"Progress doesn't need an audience."},
+  {id:'owl-3', character:'owl', theme:'calm',          text:"The night is patient. So can you be."},
+  {id:'owl-4', character:'owl', theme:'perseverance',  text:"Small work in the dark still counts."},
+  {id:'owl-5', character:'owl', theme:'calm',          text:"Rest when you must, not when you doubt."},
+
+  {id:'gardener-1', character:'gardener', theme:'perseverance', text:"Growth is quiet. Keep watering."},
+  {id:'gardener-2', character:'gardener', theme:'motivation',   text:"Every habit starts as a seed."},
+  {id:'gardener-3', character:'gardener', theme:'perseverance', text:"Weeds don't stop a strong root."},
+  {id:'gardener-4', character:'gardener', theme:'discipline',   text:"Tend today. Harvest later."},
+  {id:'gardener-5', character:'gardener', theme:'calm',         text:"Even slow growth is still growth."},
+
+  {id:'detective-1', character:'detective', theme:'focus',        text:"Follow the small clues. They add up."},
+  {id:'detective-2', character:'detective', theme:'motivation',   text:"Every case starts with one clean lead."},
+  {id:'detective-3', character:'detective', theme:'confidence',   text:"Doubt is just an unsolved clue."},
+  {id:'detective-4', character:'detective', theme:'perseverance', text:"Patience cracks the hardest case."},
+  {id:'detective-5', character:'detective', theme:'focus',        text:"Stay sharp. The details matter."},
+
+  {id:'alchemist-1', character:'alchemist', theme:'motivation',   text:"Turn today's effort into tomorrow's gold."},
+  {id:'alchemist-2', character:'alchemist', theme:'perseverance', text:"Every failed formula still teaches something."},
+  {id:'alchemist-3', character:'alchemist', theme:'focus',        text:"Focus is the rarest ingredient."},
+  {id:'alchemist-4', character:'alchemist', theme:'confidence',   text:"Confidence is brewed, not bought."},
+  {id:'alchemist-5', character:'alchemist', theme:'calm',         text:"Rest the flask before you rush the reaction."},
+
+  {id:'marathoner-1', character:'marathoner', theme:'discipline',   text:"Pace yourself. This isn't a sprint."},
+  {id:'marathoner-2', character:'marathoner', theme:'perseverance', text:"Mile by mile, task by task."},
+  {id:'marathoner-3', character:'marathoner', theme:'perseverance', text:"Slow and steady still crosses the line."},
+  {id:'marathoner-4', character:'marathoner', theme:'calm',         text:"Breathe. Find your rhythm."},
+  {id:'marathoner-5', character:'marathoner', theme:'confidence',   text:"You've trained for harder than this."},
+
+  {id:'architect-1', character:'architect', theme:'motivation',   text:"Every structure starts with one brick."},
+  {id:'architect-2', character:'architect', theme:'focus',        text:"Plan the blueprint. Then build."},
+  {id:'architect-3', character:'architect', theme:'discipline',   text:"Strong foundations don't rush."},
+  {id:'architect-4', character:'architect', theme:'perseverance', text:"Cracks are just places to reinforce."},
+  {id:'architect-5', character:'architect', theme:'confidence',   text:"Trust the design. Keep building."},
+
+  {id:'stargazer-1', character:'stargazer', theme:'motivation',   text:"Big dreams need small steps tonight."},
+  {id:'stargazer-2', character:'stargazer', theme:'calm',         text:"The stars didn't rush either."},
+  {id:'stargazer-3', character:'stargazer', theme:'perseverance', text:"Even distant goals get closer daily."},
+  {id:'stargazer-4', character:'stargazer', theme:'focus',        text:"Look up. Then look at today's list."},
+  {id:'stargazer-5', character:'stargazer', theme:'confidence',   text:"Wonder is fuel too."},
+];
+
+let state = null;
+let currentView = 'today';
+let currentListFilter = 'all';
+let historyListFilter = null;
+let pendingDelete = null;
+let sheetSelectedList = null;
+let openSwipeItem = null;
+let activeSheet = null;
+
+function todayStr(){
+  const d = new Date();
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function dateStrDaysAgo(n){
+  const d = new Date();
+  d.setDate(d.getDate()-n);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
+function uid(){ return Math.random().toString(36).slice(2,10); }
+
+function defaultData(){
+  const l1 = uid(), l2 = uid();
+  return {
+    lists: [
+      { id:l1, name:'Daily Reset', color:LIST_COLORS[0], tasks:[
+        {id:uid(), text:'Make the bed'},
+        {id:uid(), text:'Drink a glass of water'},
+        {id:uid(), text:'Take meds'},
+      ]},
+      { id:l2, name:'Deep Work', color:LIST_COLORS[1], tasks:[
+        {id:uid(), text:'One focused task, 25 min'},
+      ]},
+    ],
+    logs: {},
+    theme: {...DEFAULT_THEME},
+    quotesFilter: {character:'all', theme:'all'},
+    quoteHistory: [],
+    currentQuoteId: null
+  };
+}
+
+const storage = (function(){
+  const hasClaudeStorage = typeof window.storage !== 'undefined' && window.storage && typeof window.storage.get === 'function';
+  if(hasClaudeStorage){
+    return {
+      async get(key){ try{ return await window.storage.get(key, false); }catch(e){ return null; } },
+      async set(key, value){ try{ return await window.storage.set(key, value, false); }catch(e){ return null; } }
+    };
+  }
+  return {
+    async get(key){
+      try{ const v = localStorage.getItem(key); return v===null ? null : {key, value:v}; }
+      catch(e){ return null; }
+    },
+    async set(key, value){
+      try{ localStorage.setItem(key, value); return {key, value}; }
+      catch(e){ return null; }
+    }
+  };
+})();
+
+async function loadData(){
+  try{
+    const res = await storage.get(STORAGE_KEY);
+    if(res && res.value){
+      state = JSON.parse(res.value);
+      state.lists.forEach((l,i)=>{ if(!l.color) l.color = LIST_COLORS[i % LIST_COLORS.length]; });
+      if(!state.theme || !state.theme.a || !state.theme.b) state.theme = {...DEFAULT_THEME};
+      if(!state.quotesFilter) state.quotesFilter = {character:'all', theme:'all'};
+      if(!state.quoteHistory) state.quoteHistory = [];
+      if(state.currentQuoteId===undefined) state.currentQuoteId = null;
+      return;
+    }
+  }catch(e){}
+  state = defaultData();
+  await saveData();
+}
+
+let saveTimer = null;
+function saveData(){
+  return new Promise((resolve)=>{
+    clearTimeout(saveTimer);
+    saveTimer = setTimeout(async ()=>{
+      try{ await storage.set(STORAGE_KEY, JSON.stringify(state)); }
+      catch(e){ console.error('save failed', e); }
+      resolve();
+    }, 120);
+  });
+}
+
+// ---------- color helpers ----------
+function hexToRgbArr(hex){
+  hex = (hex||'#5FFFC0').replace('#','');
+  if(hex.length===3) hex = hex.split('').map(c=>c+c).join('');
+  const num = parseInt(hex,16);
+  return [(num>>16)&255, (num>>8)&255, num&255];
+}
+function relLuminance(hex){
+  const [r,g,b] = hexToRgbArr(hex).map(v=>{
+    v/=255;
+    return v<=0.03928 ? v/12.92 : Math.pow((v+0.055)/1.055,2.4);
+  });
+  return 0.2126*r+0.7152*g+0.0722*b;
+}
+function hexToHsl(hex){
+  let [r,g,b] = hexToRgbArr(hex).map(v=>v/255);
+  const max=Math.max(r,g,b), min=Math.min(r,g,b);
+  let h,s,l=(max+min)/2;
+  if(max===min){ h=0; s=0; }
+  else{
+    const d = max-min;
+    s = l>0.5 ? d/(2-max-min) : d/(max+min);
+    switch(max){
+      case r: h=(g-b)/d+(g<b?6:0); break;
+      case g: h=(b-r)/d+2; break;
+      default: h=(r-g)/d+4;
+    }
+    h/=6;
+  }
+  return [h*360, s*100, l*100];
+}
+function hslToHex(h,s,l){
+  h=((h%360)+360)%360; h/=360; s/=100; l/=100;
+  let r,g,b;
+  if(s===0){ r=g=b=l; }
+  else{
+    const hue2rgb=(p,q,t)=>{
+      if(t<0) t+=1;
+      if(t>1) t-=1;
+      if(t<1/6) return p+(q-p)*6*t;
+      if(t<1/2) return q;
+      if(t<2/3) return p+(q-p)*(2/3-t)*6;
+      return p;
+    };
+    const q = l<0.5 ? l*(1+s) : l+s-l*s;
+    const p = 2*l-q;
+    r = hue2rgb(p,q,h+1/3); g = hue2rgb(p,q,h); b = hue2rgb(p,q,h-1/3);
+  }
+  const toHex = v => Math.round(v*255).toString(16).padStart(2,'0');
+  return '#'+toHex(r)+toHex(g)+toHex(b);
+}
+function readableTint(hex){
+  const [h,s] = hexToHsl(hex);
+  return hslToHex(h, Math.min(Math.max(s,45),85), 80);
+}
+function deriveSecondary(hex){
+  const [h,s,l] = hexToHsl(hex);
+  return hslToHex((h+35)%360, Math.min(s+5,90), Math.min(Math.max(l,45)+6,85));
+}
+function applyTheme(a,b){
+  const root = document.documentElement.style;
+  root.setProperty('--neon-a', a);
+  root.setProperty('--neon-b', b);
+  root.setProperty('--accent-rgb', hexToRgbArr(a).join(','));
+  root.setProperty('--accent2-rgb', hexToRgbArr(b).join(','));
+  root.setProperty('--gradient', `linear-gradient(135deg, ${a}, ${b})`);
+  const avgLum = (relLuminance(a)+relLuminance(b))/2;
+  root.setProperty('--ink-on-neon', avgLum > 0.5 ? '#0A0E16' : '#FFFFFF');
+  root.setProperty('--neon-text', readableTint(a));
+}
+
+// ---------- streak calc ----------
+function isDayLit(dateStr, listId){
+  const day = state.logs[dateStr];
+  if(!day) return false;
+  if(listId === 'all') return Object.values(day).some(arr => arr && arr.length>0);
+  return !!(day[listId] && day[listId].length>0);
+}
+function currentStreak(listId){
+  let streak = 0, i = 0;
+  while(true){
+    const ds = dateStrDaysAgo(i);
+    if(isDayLit(ds, listId)){ streak++; i++; }
+    else{
+      if(i===0){ i++; continue; }
+      break;
+    }
+  }
+  return streak;
+}
+function longestStreak(listId){
+  let longest = 0, run = 0;
+  for(let i=200; i>=0; i--){
+    const ds = dateStrDaysAgo(i);
+    if(isDayLit(ds, listId)){ run++; longest = Math.max(longest, run); }
+    else run = 0;
+  }
+  return longest;
+}
+function completionRate(listId, days=28){
+  let lit = 0;
+  for(let i=0;i<days;i++) if(isDayLit(dateStrDaysAgo(i), listId)) lit++;
+  return Math.round((lit/days)*100);
+}
+
+// ---------- task completion ----------
+function isTaskDone(listId, taskId, dateStr=todayStr()){
+  const day = state.logs[dateStr];
+  return !!(day && day[listId] && day[listId].includes(taskId));
+}
+async function toggleTask(listId, taskId, el){
+  const ds = todayStr();
+  if(!state.logs[ds]) state.logs[ds] = {};
+  if(!state.logs[ds][listId]) state.logs[ds][listId] = [];
+  const arr = state.logs[ds][listId];
+  const idx = arr.indexOf(taskId);
+  if(idx === -1){
+    arr.push(taskId);
+    if(el){ el.classList.add('checked','pop'); setTimeout(()=>el.classList.remove('pop'),400); }
+  }else{
+    arr.splice(idx,1);
+    if(el){ el.classList.remove('checked'); }
+  }
+  await saveData();
+  renderStreakHeader();
+}
+
+async function deleteTaskFromList(listId, taskId){
+  const list = state.lists.find(l=>l.id===listId);
+  if(!list) return;
+  list.tasks = list.tasks.filter(t=>t.id!==taskId);
+  await saveData();
+}
+
+// ---------- swipe-to-delete ----------
+function closeOpenSwipe(except){
+  if(openSwipeItem && openSwipeItem !== except){
+    const content = openSwipeItem.querySelector('.swipe-content');
+    if(content) content.style.transform = 'translateX(0)';
+    openSwipeItem = null;
+  }
+}
+document.addEventListener('click', (e)=>{
+  if(openSwipeItem && !openSwipeItem.contains(e.target)) closeOpenSwipe();
+});
+
+function makeSwipeable(container, onDelete){
+  const content = container.querySelector('.swipe-content');
+  const delBtn = container.querySelector('.swipe-delete-btn');
+  let startX=0, startY=0, dx=0, dragging=false, decided=false, horizontal=false;
+
+  function down(e){
+    if(e.button !== undefined && e.button !== 0) return;
+    startX = e.clientX; startY = e.clientY;
+    dragging = true; decided = false; horizontal = false;
+    content.style.transition = 'none';
+  }
+  function move(e){
+    if(!dragging) return;
+    const diffX = e.clientX - startX;
+    const diffY = e.clientY - startY;
+    if(!decided){
+      if(Math.abs(diffX) > 8 || Math.abs(diffY) > 8){
+        decided = true;
+        horizontal = Math.abs(diffX) > Math.abs(diffY);
+        if(horizontal) closeOpenSwipe(container);
+      } else return;
+    }
+    if(!horizontal){ dragging = false; return; }
+    e.preventDefault();
+    dx = Math.min(0, diffX);
+    dx = Math.max(dx, -150);
+    content.style.transform = `translateX(${dx}px)`;
+  }
+  function up(){
+    if(!dragging) return;
+    dragging = false;
+    if(!horizontal) return;
+    content.style.transition = 'transform .3s var(--ease)';
+    if(dx < -120){
+      content.style.transform = 'translateX(-100%)';
+      runDelete();
+    }else if(dx < -60){
+      content.style.transform = 'translateX(-84px)';
+      openSwipeItem = container;
+    }else{
+      content.style.transform = 'translateX(0)';
+    }
+    dx = 0;
+  }
+  function runDelete(){
+    setTimeout(()=>{
+      container.style.maxHeight = '0px';
+      container.style.marginBottom = '0px';
+      container.style.opacity = '0';
+    }, 40);
+    setTimeout(()=> onDelete(), 320);
+  }
+  content.addEventListener('pointerdown', down);
+  content.addEventListener('pointermove', move);
+  content.addEventListener('pointerup', up);
+  content.addEventListener('pointercancel', up);
+  if(delBtn){
+    delBtn.addEventListener('click', (e)=>{
+      e.stopPropagation();
+      content.style.transition = 'transform .3s var(--ease)';
+      content.style.transform = 'translateX(-100%)';
+      runDelete();
+    });
+  }
+}
+
+// ---------- icons ----------
+function icon(name){
+  const icons = {
+    today:'<path d="M12 3v3M12 18v3M4.6 4.6l2.1 2.1M17.3 17.3l2.1 2.1M3 12h3M18 12h3M4.6 19.4l2.1-2.1M17.3 6.7l2.1-2.1"/><circle cx="12" cy="12" r="3.6"/>',
+    lists:'<path d="M8 6h13M8 12h13M8 18h13"/><circle cx="3.5" cy="6" r="1.4" fill="currentColor" stroke="none"/><circle cx="3.5" cy="12" r="1.4" fill="currentColor" stroke="none"/><circle cx="3.5" cy="18" r="1.4" fill="currentColor" stroke="none"/>',
+    history:'<path d="M4 4v16h16"/><path d="M8 15l3.5-4.5 3 2.5L19 7.5"/>',
+    quote:'<path d="M4 4.5h16a1 1 0 011 1v10a1 1 0 01-1 1H9.5l-4 4v-4H4a1 1 0 01-1-1v-10a1 1 0 011-1z"/>',
+    check:'<path d="M20 6.5L9.5 17 4 11.5"/>',
+    close:'<path d="M18 6L6 18M6 6l12 12"/>',
+    trash:'<path d="M4 7h16M9 7V5a2 2 0 012-2h2a2 2 0 012 2v2m2.5 0l-.8 13.2a2 2 0 01-2 1.8H8.3a2 2 0 01-2-1.8L5.5 7h13z"/>',
+    plus:'<path d="M12 5v14M5 12h14"/>',
+    bolt:'<path d="M13 2L4 14h6l-1 8 9-12h-6l1-8z" fill="currentColor" stroke="none"/>',
+    pencil:'<path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 013 3L7 19l-4 1 1-4z"/>',
+    folder:'<path d="M3 7a2 2 0 012-2h4l2 2h8a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>',
+    bars:'<path d="M5 20V10M12 20V4M19 20v-7"/>',
+    shuffle:'<path d="M3 6h4l5 6 5 6h4M17 6h4v4M17 18h4v-4M3 18h4l3.5-4.2"/>',
+    chevron:'<path d="M6 9l6 6 6-6"/>',
+    palette:'<path d="M12 3a9 9 0 100 18c1.4 0 2-1 2-2 0-.6-.3-1-.3-1.6 0-.8.6-1.4 1.4-1.4H17a4 4 0 004-4c0-5-4-9-9-9z"/><circle cx="7.5" cy="10.5" r="1.15" fill="currentColor" stroke="none"/><circle cx="12" cy="7.3" r="1.15" fill="currentColor" stroke="none"/><circle cx="16.2" cy="10" r="1.15" fill="currentColor" stroke="none"/><circle cx="9" cy="15" r="1.15" fill="currentColor" stroke="none"/>',
+  };
+  return `<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">${icons[name]||''}</svg>`;
+}
+
+// ---------- rendering ----------
+const app = document.getElementById('app');
+
+function initialOf(name){ return (name||'?').trim().charAt(0).toUpperCase() || '?'; }
+
+function renderShell(){
+  app.innerHTML = `
+    <header class="top">
+      <div class="header-row">
+        <div>
+          <div class="eyebrow">${new Date().toLocaleDateString('en-US',{weekday:'long', month:'long', day:'numeric'})}</div>
+          <h1 class="appname">Focus Trail</h1>
+        </div>
+        <button class="theme-btn" id="theme-btn">${icon('palette')}<span>Theme</span></button>
+      </div>
+      <div id="streak-header"></div>
+    </header>
+    <div id="chips-row"></div>
+    <main id="main"></main>
+
+    <div class="floating-layer">
+      <div class="fab-wrap"><button class="fab" id="fab-btn">${icon('plus')}</button></div>
+      <nav class="tabbar">
+        <button class="navbtn" data-view="today">${icon('today')}<span>Today</span></button>
+        <button class="navbtn" data-view="lists">${icon('lists')}<span>Lists</span></button>
+        <button class="navbtn" data-view="quotes">${icon('quote')}<span>Quotes</span></button>
+        <button class="navbtn" data-view="history">${icon('history')}<span>History</span></button>
+      </nav>
+      <div class="quick-sheet" id="quick-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <div class="sheet-title">Quick Add</div>
+          <button class="sheet-close" id="sheet-close">Done</button>
+        </div>
+        <div class="chips" id="sheet-chips" style="padding:0 0 12px;"></div>
+        <div class="sheet-input-row">
+          <input id="sheet-input" placeholder="Type a task, hit return…" autocomplete="off" />
+          <button class="sheet-add-btn" id="sheet-add-btn">${icon('plus')}</button>
+        </div>
+      </div>
+      <div class="quick-sheet" id="theme-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <div class="sheet-title">Theme</div>
+          <button class="sheet-close" id="theme-close">Done</button>
+        </div>
+        <div class="theme-grid" id="theme-grid"></div>
+        <div class="custom-color-row">
+          <label for="custom-color-input">Custom color</label>
+          <input type="color" id="custom-color-input" value="${state.theme.a}" />
+        </div>
+      </div>
+      <div class="quick-sheet" id="char-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <div class="sheet-title">Character</div>
+          <button class="sheet-close" id="char-sheet-close">Done</button>
+        </div>
+        <div class="character-grid" id="character-grid"></div>
+      </div>
+      <div class="quick-sheet" id="quote-theme-sheet">
+        <div class="sheet-handle"></div>
+        <div class="sheet-header">
+          <div class="sheet-title">Quote Theme</div>
+          <button class="sheet-close" id="quote-theme-sheet-close">Done</button>
+        </div>
+        <div class="theme-pill-grid" id="quote-theme-grid"></div>
+      </div>
+    </div>
+    <div class="sheet-backdrop" id="sheet-backdrop"></div>
+  `;
+  document.querySelectorAll('.navbtn').forEach(b=>{
+    b.addEventListener('click', ()=>{ currentView = b.dataset.view; renderView(); });
+  });
+  document.getElementById('fab-btn').addEventListener('click', openQuickSheet);
+  document.getElementById('sheet-close').addEventListener('click', closeAnySheet);
+  document.getElementById('sheet-backdrop').addEventListener('click', closeAnySheet);
+  document.getElementById('theme-btn').addEventListener('click', openThemeSheet);
+  document.getElementById('theme-close').addEventListener('click', closeAnySheet);
+  document.getElementById('char-sheet-close').addEventListener('click', closeAnySheet);
+  document.getElementById('quote-theme-sheet-close').addEventListener('click', closeAnySheet);
+
+  const sheetInput = document.getElementById('sheet-input');
+  const doSheetAdd = async ()=>{
+    const val = sheetInput.value.trim();
+    if(!val || !sheetSelectedList) return;
+    const list = state.lists.find(l=>l.id===sheetSelectedList);
+    if(!list) return;
+    list.tasks.push({id:uid(), text:val});
+    sheetInput.value = '';
+    await saveData();
+    if(currentView==='today') renderTodayTasksOnly();
+    sheetInput.focus();
+  };
+  document.getElementById('sheet-add-btn').addEventListener('click', doSheetAdd);
+  sheetInput.addEventListener('keydown', e=>{ if(e.key==='Enter') doSheetAdd(); });
+
+  renderThemeGrid();
+  const customInput = document.getElementById('custom-color-input');
+  customInput.addEventListener('input', async ()=>{
+    const a = customInput.value;
+    const b = deriveSecondary(a);
+    state.theme = {a,b};
+    applyTheme(a,b);
+    renderThemeGrid();
+    await saveData();
+  });
+
+  renderStreakHeader();
+}
+
+function openSheet(id){
+  activeSheet = id;
+  document.getElementById(id).classList.add('open');
+  document.getElementById('sheet-backdrop').classList.add('open');
+}
+function closeAnySheet(){
+  if(activeSheet){
+    document.getElementById(activeSheet).classList.remove('open');
+  }
+  document.getElementById('sheet-backdrop').classList.remove('open');
+  const sheetInput = document.getElementById('sheet-input');
+  if(sheetInput) sheetInput.blur();
+  activeSheet = null;
+}
+function openQuickSheet(){
+  if(state.lists.length===0){ currentView='lists'; renderView(); return; }
+  if(!sheetSelectedList || !state.lists.find(l=>l.id===sheetSelectedList)){
+    sheetSelectedList = (currentListFilter!=='all' && state.lists.find(l=>l.id===currentListFilter)) ? currentListFilter : state.lists[0].id;
+  }
+  renderSheetChips();
+  openSheet('quick-sheet');
+  setTimeout(()=> document.getElementById('sheet-input').focus(), 300);
+}
+function openThemeSheet(){
+  renderThemeGrid();
+  document.getElementById('custom-color-input').value = state.theme.a;
+  openSheet('theme-sheet');
+}
+function renderSheetChips(){
+  const el = document.getElementById('sheet-chips');
+  el.innerHTML = state.lists.map(l=>`<div class="chip ${sheetSelectedList===l.id?'active':''}" data-id="${l.id}"><span class="dot-swatch" style="background:${l.color};color:${l.color}"></span>${escapeHtml(l.name)}</div>`).join('');
+  el.querySelectorAll('.chip').forEach(c=>{
+    c.addEventListener('click', ()=>{
+      sheetSelectedList = c.dataset.id;
+      renderSheetChips();
+      document.getElementById('sheet-input').focus();
+    });
+  });
+}
+function renderThemeGrid(){
+  const grid = document.getElementById('theme-grid');
+  if(!grid) return;
+  grid.innerHTML = THEME_PRESETS.map(t=>{
+    const selected = state.theme.a===t.a && state.theme.b===t.b;
+    return `<button class="theme-swatch ${selected?'selected':''}" data-a="${t.a}" data-b="${t.b}" style="background:linear-gradient(135deg, ${t.a}, ${t.b})" title="${t.name}">${icon('check')}</button>`;
+  }).join('');
+  grid.querySelectorAll('.theme-swatch').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      state.theme = {a:btn.dataset.a, b:btn.dataset.b};
+      applyTheme(state.theme.a, state.theme.b);
+      const customInput = document.getElementById('custom-color-input');
+      if(customInput) customInput.value = state.theme.a;
+      renderThemeGrid();
+      await saveData();
+    });
+  });
+}
+
+function renderStreakHeader(){
+  const scope = currentView==='today' ? currentListFilter : (historyListFilter || 'all');
+  const s = currentStreak(scope);
+  const dots = [];
+  for(let i=6;i>=0;i--) dots.push(`<div class="dot ${isDayLit(dateStrDaysAgo(i), scope)?'lit':''}"></div>`);
+  const el = document.getElementById('streak-header');
+  if(!el) return;
+  el.innerHTML = `
+    <div class="streak-row glass">
+      <div class="streak-flame">${icon('bolt')}</div>
+      <div>
+        <div class="streak-num">${s} day${s===1?'':'s'}</div>
+        <div class="streak-label">current streak</div>
+      </div>
+      <div class="trail">${dots.join('')}</div>
+    </div>
+  `;
+}
+
+function renderView(){
+  document.querySelectorAll('.navbtn').forEach(b=> b.classList.toggle('active', b.dataset.view===currentView));
+  const main = document.getElementById('main');
+  const chipsRow = document.getElementById('chips-row');
+  chipsRow.innerHTML = '';
+  document.getElementById('fab-btn').style.display = (currentView==='history' || currentView==='quotes') ? 'none' : 'flex';
+
+  if(currentView==='today') renderToday(main, chipsRow);
+  else if(currentView==='lists') renderLists(main);
+  else if(currentView==='quotes') renderQuotes(main);
+  else renderHistory(main, chipsRow);
+
+  renderStreakHeader();
+}
+
+function renderToday(main, chipsRow){
+  if(state.lists.length===0){
+    main.innerHTML = `<div class="empty"><div class="icon-badge">${icon('folder')}</div><p>No lists yet. Create one to start checking things off.</p><button class="primary" id="go-lists">Create a list</button></div>`;
+    document.getElementById('go-lists').onclick = ()=>{ currentView='lists'; renderView(); };
+    return;
+  }
+  if(!state.lists.find(l=>l.id===currentListFilter) && currentListFilter!=='all') currentListFilter='all';
+
+  chipsRow.innerHTML = `<div class="chips">
+    <div class="chip ${currentListFilter==='all'?'active':''}" data-id="all">All</div>
+    ${state.lists.map(l=>`<div class="chip ${currentListFilter===l.id?'active':''}" data-id="${l.id}"><span class="dot-swatch" style="background:${l.color};color:${l.color}"></span>${escapeHtml(l.name)}</div>`).join('')}
+  </div>`;
+  chipsRow.querySelectorAll('.chip').forEach(c=>{
+    c.addEventListener('click', ()=>{ currentListFilter = c.dataset.id; renderView(); });
+  });
+
+  renderTodayTasksOnly();
+}
+
+function renderTodayTasksOnly(){
+  const main = document.getElementById('main');
+  const lists = currentListFilter==='all' ? state.lists : state.lists.filter(l=>l.id===currentListFilter);
+  const allTasks = [];
+  lists.forEach(l=> l.tasks.forEach(t=> allTasks.push({...t, listId:l.id, listName:l.name, listColor:l.color})));
+
+  if(allTasks.length===0){
+    main.innerHTML = `<div class="empty"><div class="icon-badge">${icon('pencil')}</div><p>Nothing here yet. Tap the button below to add your first task.</p></div>`;
+    return;
+  }
+  const todo = allTasks.filter(t=>!isTaskDone(t.listId,t.id));
+  const done = allTasks.filter(t=>isTaskDone(t.listId,t.id));
+
+  function taskRow(t){
+    const checked = isTaskDone(t.listId,t.id);
+    return `<div class="swipe-item" data-list="${t.listId}" data-task="${t.id}">
+      <div class="swipe-delete-btn">${icon('trash')}</div>
+      <div class="swipe-content task glass ${checked?'done':''}">
+        <div class="checkbox ${checked?'checked':''}">${icon('check')}</div>
+        <div class="task-main">
+          <div class="task-text">${escapeHtml(t.text)}</div>
+          ${currentListFilter==='all' ? `<div class="listtag"><span class="dot-swatch" style="background:${t.listColor};color:${t.listColor}"></span>${escapeHtml(t.listName)}</div>` : ''}
+        </div>
+      </div>
+    </div>`;
+  }
+
+  main.innerHTML = `
+    ${todo.length ? todo.map(taskRow).join('') : `<div class="empty" style="padding:20px 0;"><div class="icon-badge">${icon('check')}</div><p>All caught up. Nice work.</p></div>`}
+    ${done.length ? `<div class="section-label">Completed today · ${done.length}</div>${done.map(taskRow).join('')}` : ''}
+    ${allTasks.length ? '<div class="swipe-hint">Swipe a task left to remove it</div>' : ''}
+  `;
+
+  main.querySelectorAll('.swipe-item').forEach(item=>{
+    const cb = item.querySelector('.checkbox');
+    cb.addEventListener('click', ()=>{
+      toggleTask(item.dataset.list, item.dataset.task, cb);
+      setTimeout(renderTodayTasksOnly, 400);
+    });
+    makeSwipeable(item, async ()=>{
+      await deleteTaskFromList(item.dataset.list, item.dataset.task);
+      renderTodayTasksOnly();
+      renderStreakHeader();
+    });
+  });
+}
+
+function renderLists(main){
+  main.innerHTML = `
+    <div class="newlist-row">
+      <input id="new-list-name" placeholder="New list name…" />
+      <button class="newlist-btn" id="new-list-btn">Add list</button>
+    </div>
+    <div id="lists-container"></div>
+  `;
+  document.getElementById('new-list-btn').onclick = async ()=>{
+    const input = document.getElementById('new-list-name');
+    const name = input.value.trim();
+    if(!name) return;
+    const color = LIST_COLORS[state.lists.length % LIST_COLORS.length];
+    state.lists.push({id:uid(), name, color, tasks:[]});
+    input.value='';
+    await saveData();
+    renderLists(main);
+  };
+  document.getElementById('new-list-name').addEventListener('keydown', e=>{
+    if(e.key==='Enter') document.getElementById('new-list-btn').click();
+  });
+
+  const container = document.getElementById('lists-container');
+  if(state.lists.length===0){
+    container.innerHTML = `<div class="empty"><div class="icon-badge">${icon('folder')}</div><p>Create a list — like "Morning Routine" or "Work" — then add tasks to check off each day.</p></div>`;
+    return;
+  }
+  container.innerHTML = state.lists.map(l=>`
+    <div class="listcard glass" data-list="${l.id}">
+      <div class="listcard-head">
+        <div class="list-avatar" style="background:${l.color}">${initialOf(l.name)}</div>
+        <div class="listcard-name">${escapeHtml(l.name)}</div>
+        <div class="listcard-count">${l.tasks.length}</div>
+        <button class="icon-btn del-list" data-list="${l.id}">${icon('trash')}</button>
+      </div>
+      <div class="tasklet-list" data-list="${l.id}">
+        ${l.tasks.map(t=>`
+          <div class="swipe-item tasklet-row" data-list="${l.id}" data-task="${t.id}">
+            <div class="swipe-delete-btn">${icon('trash')}</div>
+            <div class="swipe-content tasklet"><span>${escapeHtml(t.text)}</span></div>
+          </div>
+        `).join('')}
+      </div>
+      <div class="miniadd">
+        <input placeholder="New task…" class="mini-input" data-list="${l.id}" />
+        <button class="mini-add-btn" data-list="${l.id}">Add</button>
+      </div>
+    </div>
+  `).join('');
+
+  container.querySelectorAll('.tasklet-row').forEach(item=>{
+    makeSwipeable(item, async ()=>{
+      await deleteTaskFromList(item.dataset.list, item.dataset.task);
+      renderLists(main);
+    });
+  });
+
+  container.querySelectorAll('.mini-add-btn').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const listId = btn.dataset.list;
+      const input = container.querySelector(`.mini-input[data-list="${listId}"]`);
+      const val = input.value.trim();
+      if(!val) return;
+      state.lists.find(l=>l.id===listId).tasks.push({id:uid(), text:val});
+      await saveData();
+      renderLists(main);
+    });
+  });
+  container.querySelectorAll('.mini-input').forEach(inp=>{
+    inp.addEventListener('keydown', e=>{
+      if(e.key==='Enter') container.querySelector(`.mini-add-btn[data-list="${inp.dataset.list}"]`).click();
+    });
+  });
+  container.querySelectorAll('.del-list').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      const listId = btn.dataset.list;
+      if(pendingDelete===listId){
+        state.lists = state.lists.filter(l=>l.id!==listId);
+        pendingDelete = null;
+        await saveData();
+        renderLists(main);
+      }else{
+        pendingDelete = listId;
+        btn.style.color = '#FFB84D';
+        btn.title = 'Tap again to confirm delete';
+        setTimeout(()=>{ if(pendingDelete===listId) pendingDelete=null; }, 3000);
+      }
+    });
+  });
+}
+
+function renderHistory(main, chipsRow){
+  if(state.lists.length===0){
+    main.innerHTML = `<div class="empty"><div class="icon-badge">${icon('bars')}</div><p>Your consistency history will show up here once you create a list.</p></div>`;
+    return;
+  }
+  if(!historyListFilter || !state.lists.find(l=>l.id===historyListFilter)) historyListFilter = 'all';
+
+  chipsRow.innerHTML = `<div class="chips">
+    <div class="chip ${historyListFilter==='all'?'active':''}" data-id="all">All</div>
+    ${state.lists.map(l=>`<div class="chip ${historyListFilter===l.id?'active':''}" data-id="${l.id}"><span class="dot-swatch" style="background:${l.color};color:${l.color}"></span>${escapeHtml(l.name)}</div>`).join('')}
+  </div>`;
+  chipsRow.querySelectorAll('.chip').forEach(c=>{
+    c.addEventListener('click', ()=>{ historyListFilter = c.dataset.id; renderView(); });
+  });
+
+  const cur = currentStreak(historyListFilter);
+  const longest = longestStreak(historyListFilter);
+  const rate = completionRate(historyListFilter, 28);
+
+  const days = 84;
+  let cells = '';
+  for(let i=days-1; i>=0; i--){
+    const ds = dateStrDaysAgo(i);
+    const lit = isDayLit(ds, historyListFilter);
+    cells += `<div class="cell" style="${lit? 'background:var(--gradient); border-color:transparent; box-shadow:0 0 4px rgba(var(--accent2-rgb),0.3);' : ''}" title="${ds}"></div>`;
+  }
+
+  main.innerHTML = `
+    <div class="stat-row">
+      <div class="stat glass"><div class="stat-num">${cur}</div><div class="stat-label">current streak</div></div>
+      <div class="stat glass"><div class="stat-num">${longest}</div><div class="stat-label">longest streak</div></div>
+      <div class="stat glass"><div class="stat-num">${rate}%</div><div class="stat-label">last 28 days</div></div>
+    </div>
+    <div class="section-label">Last 12 weeks</div>
+    <div class="heatmap-card glass">
+      <div class="heatmap">${cells}</div>
+    </div>
+  `;
+}
+
+// ---------- Quotes ----------
+function getFilteredQuotes(){
+  return QUOTES.filter(q =>
+    (state.quotesFilter.character==='all' || q.character===state.quotesFilter.character) &&
+    (state.quotesFilter.theme==='all' || q.theme===state.quotesFilter.theme)
+  );
+}
+function pickNextQuote(){
+  const pool = getFilteredQuotes();
+  if(pool.length===0) return null;
+  const hist = state.quoteHistory || [];
+  const last2 = hist.slice(-2);
+  let candidates = pool;
+  if(last2.length===2 && last2[0]===last2[1]){
+    const filtered = pool.filter(q=>q.id!==last2[1]);
+    if(filtered.length>0) candidates = filtered;
+  }
+  const choice = candidates[Math.floor(Math.random()*candidates.length)];
+  state.quoteHistory = [...hist, choice.id].slice(-2);
+  state.currentQuoteId = choice.id;
+  return choice;
+}
+function renderQuoteCard(quote){
+  const textEl = document.getElementById('quote-text');
+  const charEl = document.getElementById('quote-character');
+  const themeEl = document.getElementById('quote-theme-tag');
+  if(!textEl) return;
+  if(!quote){
+    textEl.textContent = 'No quotes match these filters yet.';
+    charEl.textContent = '';
+    themeEl.textContent = '';
+    return;
+  }
+  const character = CHARACTERS.find(c=>c.id===quote.character);
+  const theme = THEMES_LIST.find(t=>t.id===quote.theme);
+  textEl.textContent = quote.text;
+  charEl.textContent = character ? character.name : '';
+  themeEl.textContent = theme ? theme.name : '';
+}
+async function showNewQuote(){
+  const quote = pickNextQuote();
+  renderQuoteCard(quote);
+  await saveData();
+}
+function showCurrentOrNewQuote(){
+  const pool = getFilteredQuotes();
+  let quote = pool.find(q=>q.id===state.currentQuoteId);
+  if(!quote) quote = pickNextQuote();
+  renderQuoteCard(quote);
+}
+function renderFilterButtons(){
+  const charVal = document.getElementById('char-select-value');
+  const themeVal = document.getElementById('theme-select-value');
+  if(charVal){
+    const c = CHARACTERS.find(x=>x.id===state.quotesFilter.character);
+    charVal.textContent = c ? c.name : 'All';
+  }
+  if(themeVal){
+    const t = THEMES_LIST.find(x=>x.id===state.quotesFilter.theme);
+    themeVal.textContent = t ? t.name : 'All';
+  }
+}
+function renderCharacterGrid(){
+  const grid = document.getElementById('character-grid');
+  if(!grid) return;
+  grid.innerHTML = `
+    <button class="char-card ${state.quotesFilter.character==='all'?'selected':''}" data-id="all">
+      <div class="char-avatar" style="background:var(--glass); border:1.5px solid var(--glass-border); color:var(--text-muted);">${icon('quote')}</div>
+      <div class="char-name">All</div>
+    </button>
+    ${CHARACTERS.map(c=>`
+      <button class="char-card ${state.quotesFilter.character===c.id?'selected':''}" data-id="${c.id}">
+        <div class="char-avatar" style="background:${c.color}">${initialOf(c.name)}</div>
+        <div class="char-name">${escapeHtml(c.name)}</div>
+      </button>
+    `).join('')}
+  `;
+  grid.querySelectorAll('.char-card').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      state.quotesFilter.character = btn.dataset.id;
+      renderCharacterGrid();
+      renderFilterButtons();
+      await showNewQuote();
+    });
+  });
+}
+function renderQuoteThemeGrid(){
+  const grid = document.getElementById('quote-theme-grid');
+  if(!grid) return;
+  grid.innerHTML = `
+    <button class="theme-pill ${state.quotesFilter.theme==='all'?'selected':''}" data-id="all" style="grid-column:1/-1;">All</button>
+    ${THEMES_LIST.map(t=>`<button class="theme-pill ${state.quotesFilter.theme===t.id?'selected':''}" data-id="${t.id}">${escapeHtml(t.name)}</button>`).join('')}
+  `;
+  grid.querySelectorAll('.theme-pill').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      state.quotesFilter.theme = btn.dataset.id;
+      renderQuoteThemeGrid();
+      renderFilterButtons();
+      await showNewQuote();
+    });
+  });
+}
+function renderQuotes(main){
+  main.innerHTML = `
+    <div class="quote-card glass">
+      <div class="quote-mark">&ldquo;</div>
+      <div class="quote-text" id="quote-text"></div>
+      <div class="quote-meta">
+        <span class="quote-character" id="quote-character"></span>
+        <span class="quote-theme-tag" id="quote-theme-tag"></span>
+      </div>
+    </div>
+    <button class="primary quote-shuffle" id="quote-shuffle">${icon('shuffle')} New Quote</button>
+
+    <button class="filter-select-btn" id="char-select-btn">
+      <span class="filter-select-label">Character</span>
+      <span class="filter-select-value-wrap"><span id="char-select-value">All</span>${icon('chevron')}</span>
+    </button>
+    <button class="filter-select-btn" id="theme-select-btn">
+      <span class="filter-select-label">Theme</span>
+      <span class="filter-select-value-wrap"><span id="theme-select-value">All</span>${icon('chevron')}</span>
+    </button>
+  `;
+
+  document.getElementById('char-select-btn').addEventListener('click', ()=>{
+    renderCharacterGrid();
+    openSheet('char-sheet');
+  });
+  document.getElementById('theme-select-btn').addEventListener('click', ()=>{
+    renderQuoteThemeGrid();
+    openSheet('quote-theme-sheet');
+  });
+  document.getElementById('quote-shuffle').addEventListener('click', showNewQuote);
+
+  renderFilterButtons();
+  showCurrentOrNewQuote();
+}
+
+function escapeHtml(str){
+  const d = document.createElement('div');
+  d.textContent = str;
+  return d.innerHTML;
+}
+
+async function init(){
+  await loadData();
+  applyTheme(state.theme.a, state.theme.b);
+  renderShell();
+  renderView();
+}
+init();
+</script>
+</body>
+</html>
